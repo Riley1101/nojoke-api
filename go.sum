@@ -1,0 +1,12 @@
+github.com/bxcodec/faker v2.0.1+incompatible h1:P0KUpUw5w6WJXwrPfv35oc91i4d8nf40Nwln+M/+faA=
+github.com/bxcodec/faker v2.0.1+incompatible/go.mod h1:BNzfpVdTwnFJ6GtfYTcQu6l6rHShT+veBxNCnjCx5XM=
+github.com/bxcodec/faker/v3 v3.8.1 h1:qO/Xq19V6uHt2xujwpaetgKhraGCapqY2CRWGD/SqcM=
+github.com/bxcodec/faker/v3 v3.8.1/go.mod h1:DdSDccxF5msjFo5aO4vrobRQ8nIApg8kq3QWPEQD6+o=
+github.com/gookit/filter v1.2.0 h1:r7E01dHVkysb5WgzooiGsfblHGShEZCeGcyYM+5IpYU=
+github.com/gookit/filter v1.2.0/go.mod h1:bXs9RcB4Blxwny970opiwABeIEqQ/gzOMmHBhKwBdms=
+github.com/gookit/goutil v0.6.14 h1:96elyOG4BvVoDaiT7vx1vHPrVyEtFfYlPPBODR0/FGQ=
+github.com/gookit/goutil v0.6.14/go.mod h1:YyDBddefmjS+mU2PDPgCcjVzTDM5WgExiDv5ZA/b8I8=
+github.com/gookit/validate v1.5.1 h1:rPp64QZQJM+fysGFAhKpvekQAav4Ok6sjfTs9ZtxcpA=
+github.com/gookit/validate v1.5.1/go.mod h1:SskOHUQokzMNt6T3r7N+N/4me/6fxDx+tmoXf/3ZQog=
+golang.org/x/text v0.14.0 h1:ScX5w1eTa3QqT8oi6+ziP7dTV1S2+ALU0bI+0zXKWiQ=
+golang.org/x/text v0.14.0/go.mod h1:18ZOQIKpY8NJVqYksKHtTdi31H5itFRjB5/qKTNYzSU=
