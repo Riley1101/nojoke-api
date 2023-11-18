@@ -45,21 +45,6 @@ func GenerateUsers(limit int) []User {
 	return userList
 }
 
-func paginateUsers(userList []User, limit int, page int, total int) []User {
-	userListPaginated := []User{}
-	// slice userList with page
-	if page > 1 {
-		userList = userList[(page-1)*limit:]
-	}
-	for i, user := range userList {
-		if i == limit {
-			break
-		}
-		userListPaginated = append(userListPaginated, user)
-	}
-	return userListPaginated
-}
-
 func handleGet(w http.ResponseWriter, r *http.Request) {
 	limit := r.URL.Query().Get("limit")
 	page := r.URL.Query().Get("page")
@@ -93,7 +78,7 @@ func handleGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userList := GenerateUsers(totalInt)
-	users := paginateUsers(userList, limitInt, pageInt, totalInt)
+	users := lib.PaginateData(userList, limitInt, pageInt, totalInt)
 
 	response := lib.Response{
 		Status:  200,
