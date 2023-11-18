@@ -2,23 +2,25 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"nojoke/lib"
 	"strconv"
 
 	faker "github.com/bxcodec/faker/v3"
+	"github.com/gookit/validate"
 )
 
 type User struct {
 	Id         int    `json:"id"`
-	FirstName  string `json:"first_name"`
-	LastName   string `json:"last_name"`
+	FirstName  string `json:"first_name" validate:"required|minLen:3|maxLen:20"`
+	LastName   string `json:"last_name" validate:"required|minLen:3|maxLen:20"`
 	MiddleName string `json:"middle_name"`
-	Email      string `json:"email"`
-	Age        int    `json:"age"`
+	Email      string `json:"email" validate:"required|email"`
+	Age        int    `json:"age" validate:"min:18|max:60"`
 	Phone      string `json:"phone"`
-	Password   string `json:"password"`
+	Password   string `json:"password" validate:"minLen:8"`
 	Image      string `json:"image"`
 }
 
@@ -92,17 +94,24 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	data := User{}
 	err := json.NewDecoder(r.Body).Decode(&data)
-	if err != nil {
+	v := validate.Struct(data)
+	if !v.Validate() || err != nil {
+		fmt.Println(v.Errors)
 		w.WriteHeader(http.StatusBadRequest)
+		message := ""
+		if err != nil {
+			message = err.Error()
+		} else {
+			message = v.Errors.One()
+		}
 		json.NewEncoder(w).Encode(lib.Response{
 			Status:  400,
-			Message: "Invalid parameters",
+			Message: message,
 			Data:    nil,
 		})
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-
 	json.NewEncoder(w).Encode(
 		lib.Response{
 			Status:  200,
