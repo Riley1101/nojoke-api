@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-
 	"nojoke/lib"
 	"nojoke/routes"
 	"os"
@@ -13,7 +12,7 @@ import (
 
 func main() {
 	port := os.Getenv("PORT")
-
+	db := lib.ConnectDB()
 	if port == "" {
 		port = "1337"
 	}
@@ -25,7 +24,7 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
-	routes.InitUserRouter(r)
+	routes.InitUserRouter(r, db)
 
 	fmt.Println("Server running on port", port)
 

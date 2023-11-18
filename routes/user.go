@@ -1,8 +1,10 @@
 package routes
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"nojoke/lib"
@@ -189,8 +191,28 @@ func handleFindOne(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(lib.NewResponse(200, "OK", user))
 }
 
-func InitUserRouter(mux *mux.Router) {
+func initializeMockData(database *sql.DB) {
+	createTableQuery := `
+		CREATE TABLE IF NOT EXISTS users (
+			id INTEGER PRIMARY KEY,
+			first_name VARCHAR(255) NOT NULL,
+			last_name VARCHAR(255) NOT NULL,
+			phone VARCHAR(255) NOT NULL,
+			email VARCHAR(255) NOT NULL,
+			age INTEGER NOT NULL,
+			image VARCHAR(255) NOT NULL,
+			password VARCHAR(255) NOT NULL
+		); `
+	res, err := database.Exec(createTableQuery)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(res)
+}
+
+func InitUserRouter(mux *mux.Router, database *sql.DB) {
 	router := mux.PathPrefix("/api/users").Subrouter()
+	initializeMockData(database)
 	router.HandleFunc("", handleGet).Methods("GET")
 	router.HandleFunc("", handlePost).Methods("POST")
 	router.HandleFunc("/{id}", handleFindOne).Methods("GET")
