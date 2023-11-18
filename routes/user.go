@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"net/http"
 	"nojoke/lib"
@@ -48,46 +47,61 @@ func GenerateUsers(limit int) []User {
 
 func paginateUsers(userList []User, limit int, page int, total int) []User {
 	userListPaginated := []User{}
-	for i := 0; i < limit; i++ {
-		userListPaginated = append(userListPaginated, userList[i])
+	// slice userList with page
+	if page > 1 {
+		userList = userList[(page-1)*limit:]
+	}
+	for i, user := range userList {
+		if i == limit {
+			break
+		}
+		userListPaginated = append(userListPaginated, user)
 	}
 	return userListPaginated
 }
 
 func handleGet(w http.ResponseWriter, r *http.Request) {
 	limit := r.URL.Query().Get("limit")
-	//	page := r.URL.Query().Get("page")
-	//	total := r.URL.Query().Get("total")
+	page := r.URL.Query().Get("page")
+	total := r.URL.Query().Get("total")
 
 	if limit == "" {
 		limit = "10"
 	}
+	if page == "" {
+		page = "1"
+	}
+	if total == "" {
+		total = "100"
+	}
+
 	limitInt, error := strconv.Atoi(limit)
-	//	pageInt, error := strconv.Atoi(page)
-	//	totalInt, error := strconv.Atoi(total)
+	pageInt, error := strconv.Atoi(page)
+	totalInt, error := strconv.Atoi(total)
+
 	w.Header().Set("Content-Type", "application/json")
+
 	if error != nil {
 		response := lib.Response{
 			Status:  400,
-			Message: "Invalid parameters",
+			Message: "Invalid query params",
 			Data:    nil,
 		}
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-	userList := GenerateUsers(limitInt)
+
+	userList := GenerateUsers(totalInt)
+	users := paginateUsers(userList, limitInt, pageInt, totalInt)
+
 	response := lib.Response{
 		Status:  200,
 		Message: "OK",
-		Data:    userList,
+		Data:    users,
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
-}
-
-func validateUser(user User) bool {
-	return false
 }
 
 func handlePost(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +110,6 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&data)
 	v := validate.Struct(data)
 	if !v.Validate() || err != nil {
-		fmt.Println(v.Errors)
 		w.WriteHeader(http.StatusBadRequest)
 		message := ""
 		if err != nil {
