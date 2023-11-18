@@ -168,11 +168,32 @@ func handleDelete(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
+func handleFindOne(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	pathParams := mux.Vars(r)
+	id := pathParams["id"]
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(lib.NewResponse(400, "Invalid Id", nil))
+	}
+	if intId == 0 || intId > 100 {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(lib.NewResponse(404, "User not found", nil))
+		return
+	}
+	userList := GenerateUsers(2)
+	user := userList[0]
+	user.Id = intId
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(lib.NewResponse(200, "OK", user))
+}
+
 func InitUserRouter(mux *mux.Router) {
 	router := mux.PathPrefix("/api/users").Subrouter()
 	router.HandleFunc("", handleGet).Methods("GET")
 	router.HandleFunc("", handlePost).Methods("POST")
+	router.HandleFunc("/{id}", handleFindOne).Methods("GET")
 	router.HandleFunc("/{id}", handlePut).Methods("PUT")
 	router.HandleFunc("/{id}", handleDelete).Methods("DELETE")
-
 }
