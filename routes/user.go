@@ -107,3 +107,7 @@ func UserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func InitUserRouter(mux *http.ServeMux) {
+	mux.HandleFunc("/api/users", UserHandler)
+}

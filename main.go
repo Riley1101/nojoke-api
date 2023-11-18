@@ -22,9 +22,11 @@ func main() {
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
 	})
-	mux.HandleFunc("/api/users", routes.UserHandler)
+
+	routes.InitUserRouter(mux)
 
 	fmt.Println("Server running on port", port)
+
 	http.ListenAndServe(":"+port, loggerMux)
 
 }
