@@ -1,6 +1,6 @@
 package lib
 
-func PaginateData[T any](data []T, limit int, page int, total int) []T {
+func PaginateData[T interface{}](data []T, limit int, page int, total int) []T {
 	tmp := []T{}
 	if page > 1 {
 		data = data[(page-1)*limit:]
