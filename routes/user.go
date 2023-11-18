@@ -2,9 +2,12 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"nojoke/lib"
+
+	"github.com/gorilla/mux"
 
 	faker "github.com/bxcodec/faker/v3"
 	"github.com/gookit/validate"
@@ -44,6 +47,15 @@ func GenerateUsers(limit int) []User {
 	return userList
 }
 
+func validateUserForm(userForm User) (bool, string) {
+	v := validate.Struct(userForm)
+	if !v.Validate() {
+		message := v.Errors.One()
+		return false, message
+	}
+	return true, ""
+}
+
 func handleGet(w http.ResponseWriter, r *http.Request) {
 
 	limit := r.URL.Query().Get("limit")
@@ -72,19 +84,56 @@ func handleGet(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func handlePut(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	pathParams := mux.Vars(r)
+	id := pathParams["id"]
+	data := User{}
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(lib.NewResponse(400, err.Error(), nil))
+		return
+	}
+
+	isValid, message := validateUserForm(data)
+	if !isValid {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(lib.NewResponse(400, message, nil))
+		return
+	}
+	userList := GenerateUsers(100)
+	found := false
+	for i, user := range userList {
+		if user.Id == data.Id || fmt.Sprint(user.Id) == id {
+			userList[i] = data
+			found = true
+			break
+		}
+	}
+	if !found || data.Id == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(lib.NewResponse(404, "User not found", nil))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(
+		lib.NewResponse(200, "OK", data),
+	)
+}
+
 func handlePost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	data := User{}
 	err := json.NewDecoder(r.Body).Decode(&data)
-	v := validate.Struct(data)
-	if !v.Validate() || err != nil {
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		message := ""
-		if err != nil {
-			message = err.Error()
-		} else {
-			message = v.Errors.One()
-		}
+		json.NewEncoder(w).Encode(lib.NewResponse(400, err.Error(), nil))
+		return
+	}
+	isValid, message := validateUserForm(data)
+	if !isValid {
+		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(lib.NewResponse(400, message, nil))
 		return
 	}
@@ -94,20 +143,11 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func UserHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		handleGet(w, r)
-	case "POST":
-		handlePost(w, r)
-	case "PUT":
-	case "DELETE":
-	default:
-		http.Error(w, "Method not allowed", 405)
-	}
+func InitUserRouter(mux *mux.Router) {
+	router := mux.PathPrefix("/api/users").Subrouter()
+	router.HandleFunc("", handleGet).Methods("GET")
+	router.HandleFunc("", handlePost).Methods("POST")
+	router.HandleFunc("/{id}", handlePut).Methods("PUT")
+	router.HandleFunc("/{id}", handlePut).Methods("DELETE")
 
-}
-
-func InitUserRouter(mux *http.ServeMux) {
-	mux.HandleFunc("/api/users", UserHandler)
 }

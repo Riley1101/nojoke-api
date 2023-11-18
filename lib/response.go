@@ -12,7 +12,7 @@ type Response struct {
 	Data    interface{} `json:"data"`
 }
 
-func NewResponse(status int, message string, data interface{}, p Pagination) Response {
+func NewResponse(status int, message string, data interface{}) Response {
 	return Response{
 		Status:  status,
 		Message: message,

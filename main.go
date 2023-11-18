@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"net/http"
+
 	"nojoke/lib"
 	"nojoke/routes"
 	"os"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -15,15 +18,14 @@ func main() {
 		port = "1337"
 	}
 
-	mux := http.NewServeMux()
+	r := mux.NewRouter()
+	loggerMux := lib.NewLogger(r)
 
-	loggerMux := lib.NewLogger(mux)
-
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
 	})
 
-	routes.InitUserRouter(mux)
+	routes.InitUserRouter(r)
 
 	fmt.Println("Server running on port", port)
 
