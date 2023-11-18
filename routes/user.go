@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"net/http"
 	"nojoke/lib"
-	"strconv"
 
 	faker "github.com/bxcodec/faker/v3"
 	"github.com/gookit/validate"
@@ -46,34 +45,18 @@ func GenerateUsers(limit int) []User {
 }
 
 func handleGet(w http.ResponseWriter, r *http.Request) {
+
 	limit := r.URL.Query().Get("limit")
 	page := r.URL.Query().Get("page")
 	total := r.URL.Query().Get("total")
 
-	if limit == "" {
-		limit = "10"
-	}
-	if page == "" {
-		page = "1"
-	}
-	if total == "" {
-		total = "100"
-	}
-
-	limitInt, error := strconv.Atoi(limit)
-	pageInt, error := strconv.Atoi(page)
-	totalInt, error := strconv.Atoi(total)
+	limitInt, pageInt, totalInt, error := lib.PaginationParams(limit, page, total)
 
 	w.Header().Set("Content-Type", "application/json")
 
 	if error != nil {
-		response := lib.Response{
-			Status:  400,
-			Message: "Invalid query params",
-			Data:    nil,
-		}
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response)
+		json.NewEncoder(w).Encode(lib.NewResponse(400, "Invalid query params", nil))
 		return
 	}
 
@@ -102,20 +85,12 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 		} else {
 			message = v.Errors.One()
 		}
-		json.NewEncoder(w).Encode(lib.Response{
-			Status:  400,
-			Message: message,
-			Data:    nil,
-		})
+		json.NewEncoder(w).Encode(lib.NewResponse(400, message, nil))
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(
-		lib.Response{
-			Status:  200,
-			Message: "OK",
-			Data:    data,
-		},
+		lib.NewResponse(200, "OK", data),
 	)
 }
 
