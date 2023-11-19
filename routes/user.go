@@ -191,28 +191,68 @@ func handleFindOne(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(lib.NewResponse(200, "OK", user))
 }
 
-func initializeMockData(database *sql.DB) {
+func insertMockData(database *sql.DB, logger *lib.Logger) {
+	countQuery := `SELECT COUNT(*) FROM users;`
+	var count int
+	tx, err := database.Begin()
+	if err != nil {
+		logger.Error("Error creating transaction" + err.Error())
+		return
+	}
+	tx.QueryRow(countQuery).Scan(&count)
+	if count > 99 {
+		logger.Info("User data already inserted Skipping")
+		tx.Rollback()
+		return
+	}
+	userList := GenerateUsers(100)
+	vals := []interface{}{}
+	sqlStr := `INSERT INTO users (first_name, last_name, phone, email, age, image, password) VALUES `
+	for idx, user := range userList {
+		sqlStr += fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d),", idx*7+1, idx*7+2, idx*7+3, idx*7+4, idx*7+5, idx*7+6, idx*7+7)
+		vals = append(vals, user.FirstName, user.LastName, user.Phone, user.Email, user.Age, user.Image, user.Password)
+	}
+	sqlStr = sqlStr[0 : len(sqlStr)-1]
+	sqlStr += ";"
+	fmt.Println(sqlStr)
+	stmt, err := tx.Prepare(sqlStr)
+	if err != nil {
+		logger.Error("Error preparing statement" + err.Error())
+		return
+	}
+	res, err := stmt.Exec(vals...)
+	if err != nil {
+		tx.Rollback()
+	}
+	fmt.Println(res.LastInsertId())
+	tx.Commit()
+	logger.Info("Data inserted successfully for User")
+}
+
+func initializeMockData(database *sql.DB, logger *lib.Logger) {
 	createTableQuery := `
 		CREATE TABLE IF NOT EXISTS users (
-			id INTEGER PRIMARY KEY,
+			id SERIAL PRIMARY KEY,
 			first_name VARCHAR(255) NOT NULL,
 			last_name VARCHAR(255) NOT NULL,
 			phone VARCHAR(255) NOT NULL,
 			email VARCHAR(255) NOT NULL,
-			age INTEGER NOT NULL,
-			image VARCHAR(255) NOT NULL,
+			age INTEGER,
+			image VARCHAR(255),
 			password VARCHAR(255) NOT NULL
-		); `
-	res, err := database.Exec(createTableQuery)
+		);`
+	_, err := database.Exec(createTableQuery)
 	if err != nil {
+		logger.Info("Error creating table" + err.Error())
 		log.Fatal(err)
 	}
-	log.Println(res)
+	logger.Info("Table created successfully for User")
 }
 
-func InitUserRouter(mux *mux.Router, database *sql.DB) {
+func InitUserRouter(mux *mux.Router, database *sql.DB, logger *lib.Logger) {
 	router := mux.PathPrefix("/api/users").Subrouter()
-	initializeMockData(database)
+	initializeMockData(database, logger)
+	insertMockData(database, logger)
 	router.HandleFunc("", handleGet).Methods("GET")
 	router.HandleFunc("", handlePost).Methods("POST")
 	router.HandleFunc("/{id}", handleFindOne).Methods("GET")

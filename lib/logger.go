@@ -19,7 +19,12 @@ func NewLogger(handler http.Handler) *Logger {
 	return &Logger{logger, handler}
 }
 
-func (l *Logger) Log(message string) {
+func (l *Logger) Info(message string) {
+	l.logger.Println(message)
+}
+
+func (l *Logger) Error(message string) {
+	l.logger.SetPrefix(" ERROR: ")
 	l.logger.Println(message)
 }
 

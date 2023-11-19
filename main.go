@@ -24,7 +24,7 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
-	routes.InitUserRouter(r, db)
+	routes.InitUserRouter(r, db, loggerMux)
 
 	fmt.Println("Server running on port", port)
 
