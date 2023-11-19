@@ -25,6 +25,7 @@ func main() {
 	})
 
 	routes.InitUserRouter(r, db, loggerMux)
+	routes.InitAuthRouter(r, db, loggerMux)
 
 	fmt.Println("Server running on port", port)
 
