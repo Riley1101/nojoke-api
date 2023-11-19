@@ -103,7 +103,7 @@ func handlePut(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isValid, message := validateUserForm(data)
+	isValid, message := lib.ValidateForm(data)
 	if !isValid {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, message))

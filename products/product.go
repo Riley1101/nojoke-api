@@ -3,6 +3,7 @@ package product
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"nojoke/lib"
@@ -19,14 +20,14 @@ type Category struct {
 }
 
 type Product struct {
-	ID          int      `json:"id"`
-	Name        string   `json:"name"`
-	Price       int      `json:"price"`
-	Description string   `json:"description"`
+	Id          int      `json:"id"`
+	Name        string   `json:"name" validate:"required"`
+	Price       int      `json:"price" validate:"required"`
+	Description string   `json:"description" validate:"required"`
 	Discount    float32  `json:"discount"`
 	Rating      float32  `json:"rating"`
 	Stock       int      `json:"stock"`
-	Brand       string   `json:"brand"`
+	Brand       string   `json:"brand" validate:"required"`
 	Category    Category `json:"category"`
 	Thumbnail   string   `json:"thumbnail"`
 	Image       string   `json:"image"`
@@ -36,7 +37,7 @@ func GenerateProducts(limit int) []Product {
 	productList := []Product{}
 	for i := 0; i < limit; i++ {
 		Product := Product{}
-		Product.ID = i
+		Product.Id = i
 		Product.Name = faker.FirstName()
 		Product.Price = rand.Intn(1000000) + 1000000
 		Product.Description = faker.Paragraph()
@@ -110,7 +111,46 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
+func handlePut(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	pathParams := mux.Vars(r)
+	id := pathParams["id"]
+	data := Product{}
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, err.Error()))
+		return
+	}
+
+	isValid, message := lib.ValidateForm(data)
+	if !isValid {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, message))
+		return
+	}
+	userList := GenerateProducts(100)
+	found := false
+	for i, product := range userList {
+		if product.Id == data.Id || fmt.Sprint(product.Id) == id {
+			userList[i] = data
+			found = true
+			break
+		}
+	}
+	if !found || data.Id == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(404, "Product not found"))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(
+		lib.NewDataResponse(200, "OK", data),
+	)
+}
+
 func InitProductRouter(mux *mux.Router, database *sql.DB, logger *lib.Logger) {
 	router := mux.PathPrefix("/api/products").Subrouter()
 	router.HandleFunc("", handleGet).Methods("GET")
+	router.HandleFunc("/{id}", handlePut).Methods("PUT")
 }
