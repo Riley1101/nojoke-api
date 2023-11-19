@@ -2,10 +2,15 @@ package lib
 
 import (
 	"strconv"
+
+	"github.com/gookit/validate"
 )
 
 func PaginateData[T interface{}](data []T, limit int, page int, total int) []T {
 	tmp := []T{}
+	if page*limit > total {
+		return tmp
+	}
 	if page > 1 {
 		data = data[(page-1)*limit:]
 	}
@@ -34,4 +39,13 @@ func PaginationParams(limit string, page string, total string) (int, int, int, e
 	totalInt, error := strconv.Atoi(total)
 
 	return limitInt, pageInt, totalInt, error
+}
+
+func ValidateForm[T interface{}](form T) (bool, string) {
+	v := validate.Struct(form)
+	if !v.Validate() {
+		message := v.Errors.One()
+		return false, message
+	}
+	return true, ""
 }

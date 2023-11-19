@@ -5,6 +5,7 @@ import (
 	"net/http"
 	auth "nojoke/auth"
 	"nojoke/lib"
+	product "nojoke/products"
 	users "nojoke/users"
 	"os"
 
@@ -27,6 +28,7 @@ func main() {
 
 	users.InitUserRouter(r, db, loggerMux)
 	auth.InitAuthRouter(r, db, loggerMux)
+	product.InitProductRouter(r, db, loggerMux)
 
 	fmt.Println("Server running on port", port)
 

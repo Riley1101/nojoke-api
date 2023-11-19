@@ -1,16 +1,19 @@
-package products
+package product
 
 import (
+	"database/sql"
 	"encoding/json"
 	"math/rand"
 	"net/http"
 	"nojoke/lib"
 
+	"github.com/gorilla/mux"
+
 	faker "github.com/bxcodec/faker/v3"
 )
 
 type Category struct {
-	ID          string `json:"id"`
+	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
@@ -42,7 +45,7 @@ func GenerateProducts(limit int) []Product {
 		Product.Stock = rand.Intn(100)
 		Product.Brand = faker.FirstName()
 		Product.Category = Category{
-			ID:          faker.ID,
+			ID:          rand.Intn(100),
 			Name:        faker.FirstName(),
 			Description: faker.Paragraph(),
 		}
@@ -65,17 +68,17 @@ func handleGet(w http.ResponseWriter, r *http.Request) {
 
 	if error != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(lib.NewResponse(400, "Invalid query params", nil))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Invalid query params"))
 		return
 	}
 
-	userList := GenerateUsers(totalInt)
-	users := lib.PaginateData(userList, limitInt, pageInt, totalInt)
+	productList := GenerateProducts(totalInt)
+	paginatedProducts := lib.PaginateData(productList, limitInt, pageInt, totalInt)
 
-	response := lib.Response{
+	response := lib.DataResponse{
 		Status:  200,
 		Message: "OK",
-		Data:    users,
+		Data:    paginatedProducts,
 		Pagination: lib.Pagination{
 			Total: totalInt,
 			Limit: limitInt,
@@ -84,4 +87,30 @@ func handleGet(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
+}
+
+func handlePost(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	data := Product{}
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, err.Error()))
+		return
+	}
+	isValid, message := lib.ValidateForm(data)
+	if !isValid {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, message))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(
+		lib.NewDataResponse(201, "OK", data),
+	)
+}
+
+func InitProductRouter(mux *mux.Router, database *sql.DB, logger *lib.Logger) {
+	router := mux.PathPrefix("/api/products").Subrouter()
+	router.HandleFunc("", handleGet).Methods("GET")
 }

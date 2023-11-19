@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/gookit/validate"
 	"github.com/gorilla/mux"
 )
 
@@ -32,16 +31,6 @@ type JWTResponse struct {
 	Admin     Admin     `json:"user"`
 }
 
-func validateAdminForm(admin AdminForm) (bool, string) {
-	v := validate.Struct(admin)
-	if !v.Validate() {
-		message := ""
-		message += v.Errors.One()
-		return false, message
-	}
-	return true, ""
-}
-
 func signUpHandler(database *sql.DB, logger *lib.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -49,19 +38,19 @@ func signUpHandler(database *sql.DB, logger *lib.Logger) http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(&admin)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(lib.NewResponse(400, "Invalid form", nil))
+			json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Invalid form"))
 			return
 		}
-		isValid, message := validateAdminForm(admin)
+		isValid, message := lib.ValidateForm(admin)
 
 		if !isValid {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(lib.NewResponse(400, message, nil))
+			json.NewEncoder(w).Encode(lib.NewErrorResponse(400, message))
 			return
 		}
 		w.WriteHeader(http.StatusOK)
 
-		json.NewEncoder(w).Encode(lib.NewResponse(200, "Success", Admin{
+		json.NewEncoder(w).Encode(lib.NewDataResponse(200, "Success", Admin{
 			Username: admin.Username,
 			Email:    admin.Email,
 		}))

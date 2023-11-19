@@ -70,14 +70,14 @@ func handleGet(w http.ResponseWriter, r *http.Request) {
 
 	if error != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(lib.NewResponse(400, "Invalid query params", nil))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Invalid query params"))
 		return
 	}
 
 	userList := GenerateUsers(totalInt)
 	users := lib.PaginateData(userList, limitInt, pageInt, totalInt)
 
-	response := lib.Response{
+	response := lib.DataResponse{
 		Status:  200,
 		Message: "OK",
 		Data:    users,
@@ -99,14 +99,14 @@ func handlePut(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(lib.NewResponse(400, err.Error(), nil))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, err.Error()))
 		return
 	}
 
 	isValid, message := validateUserForm(data)
 	if !isValid {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(lib.NewResponse(400, message, nil))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, message))
 		return
 	}
 	userList := GenerateUsers(100)
@@ -120,12 +120,12 @@ func handlePut(w http.ResponseWriter, r *http.Request) {
 	}
 	if !found || data.Id == 0 {
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(lib.NewResponse(404, "User not found", nil))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(404, "User not found"))
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(
-		lib.NewResponse(200, "OK", data),
+		lib.NewDataResponse(200, "OK", data),
 	)
 }
 
@@ -135,18 +135,18 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(lib.NewResponse(400, err.Error(), nil))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, err.Error()))
 		return
 	}
 	isValid, message := validateUserForm(data)
 	if !isValid {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(lib.NewResponse(400, message, nil))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, message))
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(
-		lib.NewResponse(201, "OK", data),
+		lib.NewDataResponse(201, "OK", data),
 	)
 }
 
@@ -158,19 +158,19 @@ func handleDelete(w http.ResponseWriter, r *http.Request) {
 	intId, err := strconv.Atoi(id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(lib.NewResponse(400, "Invalid Id", nil))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Invalid Id"))
 		return
 	}
 
 	if intId == 0 || intId > 100 {
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(lib.NewResponse(404, "User not found", nil))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(404, "User not found"))
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(
-		lib.NewResponse(200, "DELETED", nil),
+		lib.NewDataResponse(200, "DELETED", nil),
 	)
 }
 
@@ -181,19 +181,18 @@ func handleFindOne(w http.ResponseWriter, r *http.Request) {
 	intId, err := strconv.Atoi(id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(lib.NewResponse(400, "Invalid Id", nil))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Invalid Id"))
 	}
 	if intId == 0 || intId > 100 {
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(lib.NewResponse(404, "User not found", nil))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(404, "User not found"))
 		return
 	}
 	userList := GenerateUsers(2)
 	user := userList[0]
 	user.Id = intId
 	w.WriteHeader(http.StatusOK)
-	response := lib.NewResponse(200, "OK", user)
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(lib.NewDataResponse(200, "OK", user))
 }
 
 func insertMockData(database *sql.DB, logger *lib.Logger) {
