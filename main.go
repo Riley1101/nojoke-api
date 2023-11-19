@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
+	auth "nojoke/auth"
 	"nojoke/lib"
-	"nojoke/routes"
+	users "nojoke/users"
 	"os"
 
 	"github.com/gorilla/mux"
@@ -24,8 +25,8 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
-	routes.InitUserRouter(r, db, loggerMux)
-	routes.InitAuthRouter(r, db, loggerMux)
+	users.InitUserRouter(r, db, loggerMux)
+	auth.InitAuthRouter(r, db, loggerMux)
 
 	fmt.Println("Server running on port", port)
 

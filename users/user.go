@@ -1,4 +1,4 @@
-package routes
+package user
 
 import (
 	"database/sql"
@@ -10,10 +10,9 @@ import (
 	"nojoke/lib"
 	"strconv"
 
-	"github.com/gorilla/mux"
-
 	faker "github.com/bxcodec/faker/v3"
 	"github.com/gookit/validate"
+	"github.com/gorilla/mux"
 )
 
 type User struct {
@@ -82,6 +81,11 @@ func handleGet(w http.ResponseWriter, r *http.Request) {
 		Status:  200,
 		Message: "OK",
 		Data:    users,
+		Pagination: lib.Pagination{
+			Total: totalInt,
+			Limit: limitInt,
+			Page:  pageInt,
+		},
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
@@ -188,7 +192,8 @@ func handleFindOne(w http.ResponseWriter, r *http.Request) {
 	user := userList[0]
 	user.Id = intId
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(lib.NewResponse(200, "OK", user))
+	response := lib.NewResponse(200, "OK", user)
+	json.NewEncoder(w).Encode(response)
 }
 
 func insertMockData(database *sql.DB, logger *lib.Logger) {

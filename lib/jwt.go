@@ -4,8 +4,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte("my_secret_key")
-
 var users = map[string]string{
 	"user1": "password1",
 	"user2": "password2",
