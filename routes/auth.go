@@ -53,6 +53,7 @@ func signUpHandler(database *sql.DB, logger *lib.Logger) http.HandlerFunc {
 			return
 		}
 		isValid, message := validateAdminForm(admin)
+
 		if !isValid {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(lib.NewResponse(400, message, nil))
