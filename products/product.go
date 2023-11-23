@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"nojoke/lib"
+	"strconv"
 
 	"github.com/gorilla/mux"
 
@@ -149,8 +150,34 @@ func handlePut(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
+func handleDelete(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Add("Content-Type", "application/json")
+	pathParams := mux.Vars(r)
+	id := pathParams["id"]
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Invalid Id"))
+		return
+	}
+
+	if intId == 0 || intId > 100 {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(404, "User not found"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(
+		lib.NewDataResponse(200, "DELETED", nil),
+	)
+}
+
 func InitProductRouter(mux *mux.Router, database *sql.DB, logger *lib.Logger) {
 	router := mux.PathPrefix("/api/products").Subrouter()
 	router.HandleFunc("", handleGet).Methods("GET")
+	router.HandleFunc("", handlePost).Methods("POST")
 	router.HandleFunc("/{id}", handlePut).Methods("PUT")
+	router.HandleFunc("/{id}", handleDelete).Methods("DELETE")
 }
