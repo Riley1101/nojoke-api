@@ -174,7 +174,31 @@ func handleDelete(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
+func initializeDatabase(database *sql.DB, logger *lib.Logger) {
+	createTableQuery := `
+		CREATE TABLE IF NOT EXISTS products (
+			id SERIAL PRIMARY KEY,
+			name VARCHAR(255) NOT NULL,
+			price INT NOT NULL,
+			description TEXT NOT NULL,
+			discount FLOAT,
+			rating FLOAT,
+			stock INT NOT NULL,
+			brand VARCHAR(255) NOT NULL,
+			category_id INT,
+			thumbnail VARCHAR(255),
+			image VARCHAR(255)
+		);`
+	_, err := database.Exec(createTableQuery)
+	if err != nil {
+		logger.Error("Error creating table" + err.Error())
+		return
+	}
+	logger.Info("Table created successfully for Products")
+}
+
 func InitProductRouter(mux *mux.Router, database *sql.DB, logger *lib.Logger) {
+	initializeDatabase(database, logger)
 	router := mux.PathPrefix("/api/products").Subrouter()
 	router.HandleFunc("", handleGet).Methods("GET")
 	router.HandleFunc("", handlePost).Methods("POST")

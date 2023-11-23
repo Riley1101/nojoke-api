@@ -233,7 +233,7 @@ func insertMockData(database *sql.DB, logger *lib.Logger) {
 	logger.Info("Data inserted successfully for User")
 }
 
-func initializeMockData(database *sql.DB, logger *lib.Logger) {
+func initializeDatabase(database *sql.DB, logger *lib.Logger) {
 	createTableQuery := `
 		CREATE TABLE IF NOT EXISTS users (
 			id SERIAL PRIMARY KEY,
@@ -255,7 +255,7 @@ func initializeMockData(database *sql.DB, logger *lib.Logger) {
 
 func InitUserRouter(mux *mux.Router, database *sql.DB, logger *lib.Logger) {
 	router := mux.PathPrefix("/api/users").Subrouter()
-	initializeMockData(database, logger)
+	initializeDatabase(database, logger)
 	insertMockData(database, logger)
 	router.HandleFunc("", handleGet).Methods("GET")
 	router.HandleFunc("", handlePost).Methods("POST")
