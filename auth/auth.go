@@ -10,7 +10,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var jwtSecret = os.Getenv("JWT_SECRET")
@@ -24,6 +23,7 @@ type AdminForm struct {
 type Admin struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
+	Password string
 }
 
 type JWTResponse struct {
@@ -49,6 +49,23 @@ func createAdminTable(database *sql.DB, logger *lib.Logger) {
 	logger.Info("Admin table created")
 }
 
+func getAdminByUserName(database *sql.DB, username string) (Admin, error) {
+	query := `
+		SELECT username, email, password
+		FROM Admin
+		WHERE username= $1
+	`
+	tx, err := database.Begin()
+	if err != nil {
+		tx.Rollback()
+		return Admin{}, err
+	}
+	row := database.QueryRow(query, username)
+	var admin Admin
+	err = row.Scan(&admin.Username, &admin.Email, &admin.Password)
+	return admin, err
+}
+
 func signUpHandler(database *sql.DB, logger *lib.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -68,13 +85,7 @@ func signUpHandler(database *sql.DB, logger *lib.Logger) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(admin.Password), 8)
-		if err != nil {
-			logger.Error(err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(lib.NewErrorResponse(500, "Error creating password hash"+err.Error()))
-			return
-		}
+		hashedPassword := lib.HashPassword(admin.Password)
 		tx, err := database.Begin()
 		if err != nil {
 			tx.Rollback()
@@ -122,12 +133,14 @@ func signInHandler(database *sql.DB, logger *lib.Logger) http.HandlerFunc {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		expectedPasswd := "admin"
-		if creds.Password != expectedPasswd {
+		admin, err := getAdminByUserName(database, creds.Username)
+		isMatch := lib.CheckHashAndPassword(creds.Password, admin.Password)
+		if err != nil || !isMatch {
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte("Invalid Credentials"))
+			json.NewEncoder(w).Encode(lib.NewErrorResponse(401, "Invalid credentials"))
 			return
 		}
+
 		expirationTime := time.Now().Add(5 * time.Minute)
 		claims := &lib.Claims{
 			Username: creds.Username,

@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gookit/validate"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func PaginateData[T interface{}](data []T, limit int, page int, total int) []T {
@@ -48,4 +49,18 @@ func ValidateForm[T interface{}](form T) (bool, string) {
 		return false, message
 	}
 	return true, ""
+}
+
+func CheckHashAndPassword(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
+
+func HashPassword(password string) string {
+	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(hash)
+}
+
+func GetHashedPassword(password string) string {
+	return HashPassword(password)
 }

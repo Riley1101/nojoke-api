@@ -218,7 +218,6 @@ func insertMockData(database *sql.DB, logger *lib.Logger) {
 	}
 	sqlStr = sqlStr[0 : len(sqlStr)-1]
 	sqlStr += ";"
-	fmt.Println(sqlStr)
 	stmt, err := tx.Prepare(sqlStr)
 	if err != nil {
 		logger.Error("Error preparing statement" + err.Error())

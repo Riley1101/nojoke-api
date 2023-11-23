@@ -10,8 +10,8 @@ var users = map[string]string{
 }
 
 type Credentials struct {
-	Password string `json:"password"`
 	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 // Create a struct that will be encoded to a JWT.
