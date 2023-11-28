@@ -26,10 +26,15 @@ type Admin struct {
 	Password string
 }
 
+type AdminResponse struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
 type JWTResponse struct {
-	Token     string    `json:"token"`
-	ExpiresAt time.Time `json:"expiresAt"`
-	Admin     Admin     `json:"user"`
+	Token      string        `json:"token"`
+	ExpiresAt  time.Time     `json:"expiresAt"`
+	JwtPayload AdminResponse `json:"user"`
 }
 
 func createAdminTable(database *sql.DB, logger *lib.Logger) {
@@ -94,6 +99,22 @@ func signUpHandler(database *sql.DB, logger *lib.Logger) http.HandlerFunc {
 			json.NewEncoder(w).Encode(lib.NewErrorResponse(500, "Error creating transaction"+err.Error()))
 			return
 		}
+
+		checkExistQuery := `
+			SELECT username, email
+			FROM Admin
+			WHERE username = $1 OR email = $2`
+		existingAdmin := tx.QueryRow(checkExistQuery, admin.Username, admin.Email)
+		var existingUsername string
+		var existingEmail string
+		err = existingAdmin.Scan(&existingUsername, &existingEmail)
+
+		if err == nil {
+			tx.Rollback()
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Username or email already exists"))
+			return
+		}
 		query := `
 			INSERT INTO admin (username, email, password)
 			VALUES ($1, $2, $3)
@@ -116,7 +137,7 @@ func signUpHandler(database *sql.DB, logger *lib.Logger) http.HandlerFunc {
 			json.NewEncoder(w).Encode(lib.NewErrorResponse(500, "Error creating admin"+err.Error()))
 			return
 		}
-		json.NewEncoder(w).Encode(lib.NewDataResponse(200, "Success", Admin{
+		json.NewEncoder(w).Encode(lib.NewDataResponse(200, "Success", AdminResponse{
 			Username: admin.Username,
 			Email:    admin.Email,
 		}))
@@ -163,9 +184,9 @@ func signInHandler(database *sql.DB, logger *lib.Logger) http.HandlerFunc {
 		json.NewEncoder(w).Encode(JWTResponse{
 			Token:     tokenString,
 			ExpiresAt: expirationTime,
-			Admin: Admin{
+			JwtPayload: AdminResponse{
 				Username: creds.Username,
-				Email:    "admin@gmail.com",
+				Email:    admin.Email,
 			},
 		})
 	}

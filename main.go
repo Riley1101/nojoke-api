@@ -25,13 +25,13 @@ func main() {
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
 	})
+	auth.InitAuthRouter(r, db, loggerMux)
 
 	users.InitUserRouter(r, db, loggerMux)
-	auth.InitAuthRouter(r, db, loggerMux)
+
 	product.InitProductRouter(r, db, loggerMux)
 
 	fmt.Println("Server running on port", port)
-
 	http.ListenAndServe(":"+port, loggerMux)
 
 }

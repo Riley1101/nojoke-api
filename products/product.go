@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"nojoke/auth"
 	"nojoke/lib"
 	"strconv"
 
@@ -58,7 +59,7 @@ func GenerateProducts(limit int) []Product {
 	return productList
 }
 
-func handleGet(w http.ResponseWriter, r *http.Request) {
+func handleGet(w http.ResponseWriter, r *http.Request, admin *auth.Admin) {
 
 	limit := r.URL.Query().Get("limit")
 	page := r.URL.Query().Get("page")
@@ -200,7 +201,7 @@ func initializeDatabase(database *sql.DB, logger *lib.Logger) {
 func InitProductRouter(mux *mux.Router, database *sql.DB, logger *lib.Logger) {
 	initializeDatabase(database, logger)
 	router := mux.PathPrefix("/api/products").Subrouter()
-	router.HandleFunc("", handleGet).Methods("GET")
+	router.Handle("", auth.Authenticated(handleGet)).Methods("GET")
 	router.HandleFunc("", handlePost).Methods("POST")
 	router.HandleFunc("/{id}", handlePut).Methods("PUT")
 	router.HandleFunc("/{id}", handleDelete).Methods("DELETE")
