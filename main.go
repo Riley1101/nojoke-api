@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	auth "nojoke/auth"
+	"nojoke/collections"
 	"nojoke/lib"
 	product "nojoke/products"
 	users "nojoke/users"
@@ -30,6 +31,8 @@ func main() {
 	users.InitUserRouter(r, db, loggerMux)
 
 	product.InitProductRouter(r, db, loggerMux)
+
+	collections.InitCollectionRouter(r, db, loggerMux)
 
 	fmt.Println("Server running on port", port)
 	http.ListenAndServe(":"+port, loggerMux)
