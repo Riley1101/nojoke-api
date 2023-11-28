@@ -233,18 +233,8 @@ func insertMockData(database *sql.DB, logger *lib.Logger) {
 }
 
 func initializeDatabase(database *sql.DB, logger *lib.Logger) {
-	createTableQuery := `
-		CREATE TABLE IF NOT EXISTS users (
-			id SERIAL PRIMARY KEY,
-			first_name VARCHAR(255) NOT NULL,
-			last_name VARCHAR(255) NOT NULL,
-			phone VARCHAR(255) NOT NULL,
-			email VARCHAR(255) NOT NULL,
-			age INTEGER,
-			image VARCHAR(255),
-			password VARCHAR(255) NOT NULL
-		);`
-	_, err := database.Exec(createTableQuery)
+	q := CreateUserTableQuery
+	_, err := database.Exec(q)
 	if err != nil {
 		logger.Info("Error creating table" + err.Error())
 		log.Fatal(err)

@@ -176,20 +176,7 @@ func handleDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func initializeDatabase(database *sql.DB, logger *lib.Logger) {
-	createTableQuery := `
-		CREATE TABLE IF NOT EXISTS products (
-			id SERIAL PRIMARY KEY,
-			name VARCHAR(255) NOT NULL,
-			price INT NOT NULL,
-			description TEXT NOT NULL,
-			discount FLOAT,
-			rating FLOAT,
-			stock INT NOT NULL,
-			brand VARCHAR(255) NOT NULL,
-			category_id INT,
-			thumbnail VARCHAR(255),
-			image VARCHAR(255)
-		);`
+	createTableQuery := CreateProductTableQuery
 	_, err := database.Exec(createTableQuery)
 	if err != nil {
 		logger.Error("Error creating table" + err.Error())

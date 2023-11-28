@@ -38,14 +38,7 @@ type JWTResponse struct {
 }
 
 func createAdminTable(database *sql.DB, logger *lib.Logger) {
-	query := `
-		CREATE TABLE IF NOT EXISTS admin (
-			id SERIAL PRIMARY KEY,
-			username VARCHAR(255) NOT NULL,
-			email VARCHAR(255) NOT NULL,
-			password VARCHAR(255) NOT NULL
-		)
-	`
+	query := CreateAdminTableQuery
 	_, err := database.Exec(query)
 	if err != nil {
 		logger.Error("Error creating admin table" + err.Error())
@@ -161,7 +154,6 @@ func signInHandler(database *sql.DB, logger *lib.Logger) http.HandlerFunc {
 			json.NewEncoder(w).Encode(lib.NewErrorResponse(401, "Invalid credentials"))
 			return
 		}
-
 		expirationTime := time.Now().Add(5 * time.Minute)
 		claims := &lib.Claims{
 			Username: creds.Username,
@@ -176,11 +168,13 @@ func signInHandler(database *sql.DB, logger *lib.Logger) http.HandlerFunc {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+
 		http.SetCookie(w, &http.Cookie{
 			Name:    "token",
 			Value:   tokenString,
 			Expires: expirationTime,
 		})
+
 		json.NewEncoder(w).Encode(JWTResponse{
 			Token:     tokenString,
 			ExpiresAt: expirationTime,
