@@ -1,25 +1,17 @@
 package collections
 
-const CreateCollectionTableQuery = `
-	CREATE TABLE IF NOT EXISTS collection (
-		id SERIAL PRIMARY KEY,
-		create_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		user_id INTEGER REFERENCES admin(id) ON DELETE CASCADE
-	);
+// one to many to products
+const CreateProductCollectionTableQuery = `
+CREATE TABLE IF NOT EXISTS product_collections (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id INTEGER REFERENCES admin(id) ON DELETE CASCADE
+);
 `
 
-const CreateCollectionTypeTableQuery = `
-	CREATE TABLE IF NOT EXISTS collection_type (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(255) NOT NULL,
-		description VARCHAR(255) NOT NULL,
-		create_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);
+const CountProductCollectionsQuery = `
+	SELECT COUNT(*) FROM product_collections;
 `
-
-const CountCollectionsQuery = `
-	SELECT COUNT(*) FROM collection;
-`
-const GetCollectionsQuery = `
-	SELECT id, create_at, items, user_id FROM collection;
+const GetProductCollectionsQuery = `
+	SELECT id, create_at, products, user_id FROM product_collections;
 `

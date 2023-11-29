@@ -11,13 +11,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Collection struct {
-	Id       int    `json:"id"`
-	CreateAt string `json:"create_at"`
-	Items    int    `json:"items"`
-	UserId   int    `json:"user_id"`
-}
-
 type CollectionType struct {
 	Id          int    `json:"id"`
 	CreateAt    string `json:"create_at"`
@@ -26,7 +19,7 @@ type CollectionType struct {
 }
 
 func initializeDatabase(database *sql.DB, logger *lib.Logger) {
-	_, err := database.Exec(CreateCollectionTableQuery)
+	_, err := database.Exec(CreateProductCollectionTableQuery)
 	if err != nil {
 		logger.Error("Error creating collection table: " + err.Error())
 	}
@@ -59,32 +52,31 @@ func handleGet(
 		return
 	}
 	var count int
-	error = tx.QueryRow(CountCollectionsQuery).Scan(&count)
+	error = tx.QueryRow(CountProductCollectionsQuery).Scan(&count)
 	if error != nil {
+
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Error getting count"))
 		return
 	}
-	rows, error := tx.Query(GetCollectionsQuery, limitInt, pageInt)
-	fmt.Println(error)
+	rows, error := tx.Query(GetProductCollectionsQuery)
 	if error != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Error getting collections"))
 		return
 	}
-	collections := make([]*Collection, 0)
+	collections := make([]ProductCollection, 0)
 	for rows.Next() {
-		collection := new(Collection)
-		error := rows.Scan(
-			&collection.Id,
-			&collection.CreateAt,
-			&collection.Items,
-			&collection.UserId)
+		collection := ProductCollection{}
+		var products []uint8
+		error = rows.Scan(&collection.Id, &collection.CreateAt, &products, &collection.UserId)
+		fmt.Println(error)
 		if error != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Error scanning collections"))
+			json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Error getting collections"))
 			return
 		}
+		collection.Products = products
 		collections = append(collections, collection)
 	}
 	defer rows.Close()

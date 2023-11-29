@@ -12,6 +12,7 @@ const CreateProductTableQuery = `
 		brand VARCHAR(255) NOT NULL,
 		category_id INT,
 		thumbnail VARCHAR(255),
-		image VARCHAR(255)
+		image VARCHAR(255),
+		collection_id INTEGER REFERENCES product_collections(id) ON DELETE CASCADE
 	);
 `

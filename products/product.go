@@ -22,7 +22,7 @@ type Category struct {
 }
 
 type Product struct {
-	Id          int      `json:"id"`
+	Id          int64    `json:"id"`
 	Name        string   `json:"name" validate:"required"`
 	Price       int      `json:"price" validate:"required"`
 	Description string   `json:"description" validate:"required"`
@@ -39,7 +39,7 @@ func GenerateProducts(limit int) []Product {
 	productList := []Product{}
 	for i := 0; i < limit; i++ {
 		Product := Product{}
-		Product.Id = i
+		Product.Id = int64(i)
 		Product.Name = faker.FirstName()
 		Product.Price = rand.Intn(1000000) + 1000000
 		Product.Description = faker.Paragraph()
