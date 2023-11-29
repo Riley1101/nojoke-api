@@ -59,7 +59,7 @@ func GenerateProducts(limit int) []Product {
 	return productList
 }
 
-func handleGet(w http.ResponseWriter, r *http.Request, admin *auth.Admin) {
+func handleGet(w http.ResponseWriter, r *http.Request, admin *auth.Admin, database *sql.DB, logger *lib.Logger) {
 
 	limit := r.URL.Query().Get("limit")
 	page := r.URL.Query().Get("page")
@@ -67,21 +67,52 @@ func handleGet(w http.ResponseWriter, r *http.Request, admin *auth.Admin) {
 
 	limitInt, pageInt, totalInt, error := lib.PaginationParams(limit, page, total)
 
-	w.Header().Set("Content-Type", "application/json")
+	query := GetProductsByCollectionQuery
+	collectionId := 1
+	tx, error := database.Begin()
 
 	if error != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Invalid query params"))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Error creating transition"))
 		return
 	}
 
-	productList := GenerateProducts(totalInt)
-	paginatedProducts := lib.PaginateData(productList, limitInt, pageInt, totalInt)
+	rows, error := tx.Query(query, collectionId)
+
+	if error != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Error getting products"))
+		return
+	}
+
+	productList := []Product{}
+
+	for rows.Next() {
+		product := Product{}
+		rows.Scan(
+			&product.Id,
+			&product.Name,
+			&product.Price,
+			&product.Description,
+			&product.Discount,
+			&product.Rating,
+			&product.Stock,
+			&product.Brand,
+			&product.Category.ID,
+			&product.Category.Name,
+			&product.Category.Description,
+			&product.Thumbnail,
+			&product.Image,
+		)
+		productList = append(productList, product)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 
 	response := lib.DataResponse{
 		Status:  200,
 		Message: "OK",
-		Data:    paginatedProducts,
+		Data:    productList,
 		Pagination: lib.Pagination{
 			Total: totalInt,
 			Limit: limitInt,
@@ -92,7 +123,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, admin *auth.Admin) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func handlePost(w http.ResponseWriter, r *http.Request) {
+func handlePost(w http.ResponseWriter, r *http.Request, admin *auth.Admin) {
 	w.Header().Add("Content-Type", "application/json")
 	data := Product{}
 	err := json.NewDecoder(r.Body).Decode(&data)
@@ -113,7 +144,7 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func handlePut(w http.ResponseWriter, r *http.Request) {
+func handlePut(w http.ResponseWriter, r *http.Request, admin *auth.Admin) {
 	w.Header().Add("Content-Type", "application/json")
 	pathParams := mux.Vars(r)
 	id := pathParams["id"]
@@ -151,7 +182,7 @@ func handlePut(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func handleDelete(w http.ResponseWriter, r *http.Request) {
+func handleDelete(w http.ResponseWriter, r *http.Request, admin *auth.Admin) {
 
 	w.Header().Add("Content-Type", "application/json")
 	pathParams := mux.Vars(r)
@@ -188,8 +219,10 @@ func initializeDatabase(database *sql.DB, logger *lib.Logger) {
 func InitProductRouter(mux *mux.Router, database *sql.DB, logger *lib.Logger) {
 	initializeDatabase(database, logger)
 	router := mux.PathPrefix("/api/products").Subrouter()
-	router.Handle("", auth.Authenticated(handleGet)).Methods("GET")
-	router.HandleFunc("", handlePost).Methods("POST")
-	router.HandleFunc("/{id}", handlePut).Methods("PUT")
-	router.HandleFunc("/{id}", handleDelete).Methods("DELETE")
+	router.Handle("", auth.Authenticated(func(w http.ResponseWriter, r *http.Request, a *auth.Admin) {
+		handleGet(w, r, a, database, logger)
+	})).Methods("GET")
+	router.Handle("", auth.Authenticated(handlePost)).Methods("POST")
+	router.Handle("/{id}", auth.Authenticated(handlePut)).Methods("PUT")
+	router.Handle("/{id}", auth.Authenticated(handleDelete)).Methods("DELETE")
 }

@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -13,7 +12,6 @@ type AuthMiddleware struct {
 
 func (am *AuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Check if the user is logged in
-	fmt.Println("AuthMiddleware")
 	admin := Admin{}
 	err := false
 	if err {
