@@ -29,3 +29,13 @@ const GetProductsByCollectionQuery = `
 	JOIN collections c ON p.collection_id = c.id
 	WHERE c.id = $1;
 `
+
+const GetProductsWithoutCollectionQuery = `
+	SELECT 
+	p.id,p.name,p.price,p.description,p.discount,
+	p.rating,p.stock,p.brand,p.category_id,
+	p.thumbnail,p.image,p.collection_id
+	FROM products p
+	JOIN collections c ON p.collection_id = c.id
+	WHERE c.id IS NULL;
+`

@@ -11,16 +11,16 @@ type AuthMiddleware struct {
 }
 
 func (am *AuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Check if the user is logged in
+	// get jwt
+	// check if jwt is valid
+	// if valid, get admin
+	// if not, redirect to guest page
+	jwt := r.Header.Get("Authorization")
 	admin := Admin{}
-	err := false
-	if err {
-		// If not, redirect to the login page
-		http.Redirect(w, r, "/login", http.StatusFound)
+	if jwt == "" {
+		am.handler(w, r, nil)
 		return
 	}
-
-	// If they are, call the wrapped handler
 	am.handler(w, r, &admin)
 }
 

@@ -6,6 +6,11 @@ type Pagination struct {
 	Page  int `json:"page"`
 }
 
+type Response struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}
+
 type ErrorResponse struct {
 	Status  int    `json:"status"`
 	Message string `json:"message"`

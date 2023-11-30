@@ -56,64 +56,46 @@ func GenerateProducts(limit int) []Product {
 	return productList
 }
 
-func handleGet(w http.ResponseWriter, r *http.Request, admin *auth.Admin, database *sql.DB, logger *lib.Logger) {
+func handleGet(w http.ResponseWriter, r *http.Request, admin *auth.Admin, pq *ProductQuery) {
 
 	limit := r.URL.Query().Get("limit")
 	page := r.URL.Query().Get("page")
 	total := r.URL.Query().Get("total")
-
 	limitInt, pageInt, totalInt, error := lib.PaginationParams(limit, page, total)
 
-	query := GetProductsByCollectionQuery
-	collectionId := 1
-	tx, error := database.Begin()
-
+	pagination := lib.Pagination{
+		Limit: limitInt,
+		Page:  pageInt,
+		Total: totalInt,
+	}
 	if error != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Error creating transition"))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, error.Error()))
 		return
 	}
 
-	rows, error := tx.Query(query, collectionId)
+	var productList []Product
+
+	if admin == nil {
+		productList, error = pq.HandleGuestGet(&pagination)
+	} else {
+		collectionId := 1
+		productList, error = pq.HandleGet(collectionId, &pagination)
+	}
+	fmt.Println(productList)
 	if error != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Error getting products"))
+		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, error.Error()))
 		return
-	}
-	productList := []Product{}
-	for rows.Next() {
-		val, error := rows.Columns()
-		fmt.Println(val)
-		fmt.Println(error)
-		product := Product{}
-		error = rows.Scan(
-			&product.Id,
-			&product.Name,
-			&product.Price,
-			&product.Description,
-			&product.Discount,
-			&product.Rating,
-			&product.Stock,
-			&product.Brand,
-			&product.Category_id,
-			&product.Thumbnail,
-			&product.Image,
-			&product.Collection_id,
-		)
-		productList = append(productList, product)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 
 	response := lib.DataResponse{
-		Status:  200,
-		Message: "OK",
-		Data:    productList,
-		Pagination: lib.Pagination{
-			Total: totalInt,
-			Limit: limitInt,
-			Page:  pageInt,
-		},
+		Status:     200,
+		Message:    "OK",
+		Data:       productList,
+		Pagination: pagination,
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
@@ -215,9 +197,14 @@ func initializeDatabase(database *sql.DB, logger *lib.Logger) {
 func InitProductRouter(mux *mux.Router, database *sql.DB, logger *lib.Logger) {
 	initializeDatabase(database, logger)
 	router := mux.PathPrefix("/api/products").Subrouter()
+	pq := ProductQuery{
+		database: database,
+		logger:   logger,
+	}
 	router.Handle("", auth.Authenticated(func(w http.ResponseWriter, r *http.Request, a *auth.Admin) {
-		handleGet(w, r, a, database, logger)
+		handleGet(w, r, a, &pq)
 	})).Methods("GET")
+
 	router.Handle("", auth.Authenticated(handlePost)).Methods("POST")
 	router.Handle("/{id}", auth.Authenticated(handlePut)).Methods("PUT")
 	router.Handle("/{id}", auth.Authenticated(handleDelete)).Methods("DELETE")

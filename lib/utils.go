@@ -38,7 +38,6 @@ func PaginationParams(limit string, page string, total string) (int, int, int, e
 	limitInt, error := strconv.Atoi(limit)
 	pageInt, error := strconv.Atoi(page)
 	totalInt, error := strconv.Atoi(total)
-
 	return limitInt, pageInt, totalInt, error
 }
 
