@@ -36,6 +36,5 @@ const GetProductsWithoutCollectionQuery = `
 	p.rating,p.stock,p.brand,p.category_id,
 	p.thumbnail,p.image,p.collection_id
 	FROM products p
-	JOIN collections c ON p.collection_id = c.id
-	WHERE c.id IS NULL;
+	WHERE p.collection_id IS NULL;
 `
