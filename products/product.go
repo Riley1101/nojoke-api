@@ -22,17 +22,18 @@ type Category struct {
 }
 
 type Product struct {
-	Id          int64    `json:"id"`
-	Name        string   `json:"name" validate:"required"`
-	Price       int      `json:"price" validate:"required"`
-	Description string   `json:"description" validate:"required"`
-	Discount    float32  `json:"discount"`
-	Rating      float32  `json:"rating"`
-	Stock       int      `json:"stock"`
-	Brand       string   `json:"brand" validate:"required"`
-	Category    Category `json:"category"`
-	Thumbnail   string   `json:"thumbnail"`
-	Image       string   `json:"image"`
+	Id            int64   `json:"id"`
+	Name          string  `json:"name" validate:"required"`
+	Price         int     `json:"price" validate:"required"`
+	Description   string  `json:"description" validate:"required"`
+	Discount      float32 `json:"discount"`
+	Rating        float32 `json:"rating"`
+	Stock         int     `json:"stock"`
+	Brand         string  `json:"brand" validate:"required"`
+	Category_id   int     `json:"category"`
+	Thumbnail     string  `json:"thumbnail"`
+	Image         string  `json:"image"`
+	Collection_id int64   `json:"collection_id"`
 }
 
 func GenerateProducts(limit int) []Product {
@@ -47,11 +48,7 @@ func GenerateProducts(limit int) []Product {
 		Product.Rating = rand.Float32() * 5
 		Product.Stock = rand.Intn(100)
 		Product.Brand = faker.FirstName()
-		Product.Category = Category{
-			ID:          rand.Intn(100),
-			Name:        faker.FirstName(),
-			Description: faker.Paragraph(),
-		}
+		Product.Category_id = rand.Intn(100)
 		Product.Thumbnail = faker.URL()
 		Product.Image = faker.URL()
 		productList = append(productList, Product)
@@ -78,18 +75,18 @@ func handleGet(w http.ResponseWriter, r *http.Request, admin *auth.Admin, databa
 	}
 
 	rows, error := tx.Query(query, collectionId)
-
 	if error != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Error getting products"))
 		return
 	}
-
 	productList := []Product{}
-
 	for rows.Next() {
+		val, error := rows.Columns()
+		fmt.Println(val)
+		fmt.Println(error)
 		product := Product{}
-		rows.Scan(
+		error = rows.Scan(
 			&product.Id,
 			&product.Name,
 			&product.Price,
@@ -98,11 +95,10 @@ func handleGet(w http.ResponseWriter, r *http.Request, admin *auth.Admin, databa
 			&product.Rating,
 			&product.Stock,
 			&product.Brand,
-			&product.Category.ID,
-			&product.Category.Name,
-			&product.Category.Description,
+			&product.Category_id,
 			&product.Thumbnail,
 			&product.Image,
+			&product.Collection_id,
 		)
 		productList = append(productList, product)
 	}

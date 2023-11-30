@@ -54,7 +54,6 @@ func handleGet(
 	var count int
 	error = tx.QueryRow(CountCollectionsQuery).Scan(&count)
 	if error != nil {
-
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(lib.NewErrorResponse(400, "Error getting count"))
 		return

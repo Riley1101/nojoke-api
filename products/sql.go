@@ -22,8 +22,10 @@ const CountProductsQuery = `
 `
 
 const GetProductsByCollectionQuery = `
-	SELECT products.*
-	FROM products
-	JOIN collections ON products.collection_id = collections.id
-	WHERE collections.id = $1;
+	SELECT p.id,p.name,p.price,p.description,p.discount,
+	p.rating,p.stock,p.brand,p.category_id,
+	p.thumbnail,p.image,p.collection_id
+	FROM products p
+	JOIN collections c ON p.collection_id = c.id
+	WHERE c.id = $1;
 `
